@@ -21,6 +21,13 @@ $PRECIO_MAX = 1300
 $PRECIO_MIN = 450     # por debajo de esto en Barcelona es habitacion, plaza o trastero
 $M2_MIN     = 20
 
+# El precio por metro delata lo que la tarjeta no dice. Toda la busqueda se
+# mueve entre 13 y 25 EUR/m2. Por encima de 30 es alquiler de temporada casi
+# siempre (pisos diminutos con "todos los gastos incluidos"); por debajo de 8
+# no es una vivienda entera, es una habitacion o un dato mal leido.
+$RATIO_MAX = 30
+$RATIO_MIN = 8
+
 # Lo que nunca es una vivienda entera para una persona.
 $NO_VIVIENDA = '(?i)habitación|habitacion|compartid|compartir|coliving|residencia|' +
                'plaza de (aparcamiento|garaje)|parking|trastero|local comercial|oficina|nave|solar'
@@ -69,8 +76,15 @@ function Vale($f) {
   if ($f.hab -and $f.hab -gt 1) { return $false }
   if ($f.texto -match $NO_VIVIENDA) { return $false }
   if ($f.texto -match $TEMPORADA_TXT) { return $false }
+
+  $ratio = $f.precio / $f.m2
+  if ($ratio -gt $RATIO_MAX -or $ratio -lt $RATIO_MIN) { return $false }
+
+  # La zona se comprueba SOLO contra el barrio extraido, nunca contra el texto
+  # de la ventana: en Pisos.com la ventana se solapa con el anuncio siguiente y
+  # colaban fichas de barrios que no son.
   if (-not $f.zona) { return $false }
-  if (($f.zona -notmatch $ZONAS) -and ($f.texto -notmatch $ZONAS)) { return $false }
+  if ($f.zona -notmatch $ZONAS) { return $false }
   return $true
 }
 
@@ -207,6 +221,14 @@ foreach ($f in $datos.colivings) { if ($f.url) { $urlsConocidas[($f.url -replace
 $idsConocidos = @{}
 foreach ($f in $datos.pisos) { if ($f.id) { $idsConocidos[[string]$f.id] = $true } }
 
+# Un mismo piso se anuncia en varios portales con URLs distintas. La pareja
+# precio + metros lo identifica bastante bien: si ya hay una ficha con los dos
+# iguales, se da por duplicado.
+$huellas = @{}
+foreach ($f in $datos.pisos) {
+  if ($f.precio -and $f.m2) { $huellas[("{0}|{1}" -f $f.precio, $f.m2)] = $true }
+}
+
 $nuevos = @()
 $vistos = @{}
 foreach ($a in $encontrados) {
@@ -215,6 +237,9 @@ foreach ($a in $encontrados) {
   $vistos[$clave] = $true
   if ($urlsConocidas.ContainsKey($clave)) { continue }
   if ($idsConocidos.ContainsKey($a.id))   { continue }
+  $huella = "{0}|{1}" -f $a.precio, $a.m2
+  if ($huellas.ContainsKey($huella)) { continue }
+  $huellas[$huella] = $true
   $nuevos += $a
 }
 
