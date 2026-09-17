@@ -30,7 +30,8 @@ $RATIO_MIN = 8
 
 # Lo que nunca es una vivienda entera para una persona.
 $NO_VIVIENDA = '(?i)habitación|habitacion|compartid|compartir|coliving|residencia|' +
-               'plaza de (aparcamiento|garaje)|parking|trastero|local comercial|oficina|nave|solar'
+               'plaza de (aparcamiento|garaje)|parking|trastero|local comercial|oficina|nave|solar|' +
+               'garaje en alquiler|trastero en alquiler|local en alquiler|despacho'
 
 # Operadores de alquiler de temporada.
 $TEMPORADA_TXT = '(?i)temporada|vacacional|corta estancia|short.?term|días mínimo|meses mínimo'
@@ -190,6 +191,67 @@ function Barrido-Pisos {
 }
 
 # --------------------------------------------------------------------------
+# Webs de inmobiliarias
+#
+# Cada una publica a su manera, asi que se configura con su pagina de alquiler
+# y el patron de sus enlaces de ficha. Son webs pequenas: si alguna cambia de
+# formato deja de dar resultados, pero nunca rompe el barrido.
+# --------------------------------------------------------------------------
+# Ojo: hay webs que escriben los enlaces con comillas simples (Guinot Prunera)
+# y otras con dobles, asi que todos los patrones aceptan las dos.
+$AGENCIAS = @(
+  @{ n = 'Guinot Prunera';  u = 'https://www.guinotprunera.com/es/alquiler/';                    p = 'href=["'']([^"'']*ref-\d+)["'']' },
+  @{ n = 'Finques Martell'; u = 'https://finquesmartell.com/inmuebles';                          p = 'href=["'']([^"'']*/immoble/[^"'']+)["'']' },
+  @{ n = 'Finques Feliu';   u = 'https://www.finquesfeliu.es/es/buscador/inter';                 p = 'href=["'']([^"'']*/node/\d+)["'']' },
+  @{ n = 'BarnaPiso';       u = 'https://barnapiso.com/propietats-disponibles-barcelona/';       p = 'href=["'']([^"'']*/habitatge/[^"'']+)["'']' },
+  @{ n = 'Toysan Finques';  u = 'https://toysanfinques.com/immobles/';                           p = 'href=["'']([^"'']*/immobles/[^"''/]+/)["'']' },
+  @{ n = 'Finques Marba';   u = 'https://www.finquesmarba.com/alquiler/';                        p = 'href=["'']([^"'']*\?property=[^"'']+)["'']' },
+  @{ n = 'Finques Teixidor';u = 'https://www.finquesteixidor.com/es/alquiler-barcelona.cfm';     p = 'href=["'']([^"'']*/ID/\d+/[^"'']*)["'']' },
+  @{ n = 'Calvet Premium';  u = 'https://inmobiliaria.calvetpremium.com/es/venta_o_alquiler';    p = 'href=["'']([^"'']*/es/[a-z_]+/\d+[^"'']*)["'']' },
+  @{ n = 'Fincas Ubiergo';  u = 'https://fincasubiergo.com/es/alquiler/viviendas/barcelona/barcelona'; p = 'href=["'']([^"'']*/alquiler/viviendas/barcelona/barcelona/\d+)["'']' },
+  @{ n = 'Multi Espai';     u = 'https://multiespaibcn.com/status/alquiler';                     p = 'href=["'']([^"'']*/property/[^"'']+)["'']' }
+)
+
+# No se intenta leer las fichas una a una: cada web esta hecha de una forma y
+# un lector generico falla en todas. Lo que si funciona en cualquiera es mirar
+# que precios dentro de tu horquilla anuncia hoy y compararlo con la vez
+# anterior. Si la lista cambia, esa inmobiliaria ha movido su oferta y toca
+# mirarla; si no cambia, no hay nada que ver.
+function Vigilar-Agencias($previas) {
+  $estado = @()
+  foreach ($ag in $AGENCIAS) {
+    $html = Baja $ag.u
+    if (-not $html) {
+      Write-Host ("    {0,-18} no responde" -f $ag.n)
+      $estado += [pscustomobject]@{ nombre = $ag.n; url = $ag.u; precios = @(); huella = 'sin-respuesta'; cambio = $false }
+      continue
+    }
+
+    $txt = Texto $html
+    $precios = @()
+    foreach ($m in [regex]::Matches($txt, '([\d\.]{3,6})\s*€')) {
+      $v = Numero $m.Groups[1].Value
+      if ($v -and $v -ge $PRECIO_MIN -and $v -le $PRECIO_MAX) { $precios += $v }
+    }
+    $precios = @($precios | Sort-Object -Unique)
+    $huella = ($precios -join ',')
+
+    $antes = $null
+    if ($previas) { $antes = $previas | Where-Object { $_.nombre -eq $ag.n } | Select-Object -First 1 }
+    $cambio = $false
+    if ($antes -and $antes.huella -ne $huella -and $antes.huella -ne 'sin-respuesta') { $cambio = $true }
+
+    $aviso = ''
+    if ($cambio) { $aviso = '  <-- ha cambiado' }
+    Write-Host ("    {0,-18} {1} anuncios en tu horquilla{2}" -f $ag.n, $precios.Count, $aviso)
+
+    $estado += [pscustomobject]@{ nombre = $ag.n; url = $ag.u; precios = $precios; huella = $huella; cambio = $cambio }
+    Start-Sleep -Milliseconds 600
+  }
+  return $estado
+}
+
+# --------------------------------------------------------------------------
 # Barrido
 # --------------------------------------------------------------------------
 Write-Host ("Barrido de portales - {0}" -f (Get-Date -Format 'dd/MM/yyyy HH:mm'))
@@ -205,6 +267,15 @@ Write-Host "  Pisos.com..."
 $lote = Barrido-Pisos
 Write-Host ("    {0} fichas validas" -f $lote.Count)
 $encontrados += $lote
+
+$datosPrevios = Get-Content $rutaDatos -Raw -Encoding UTF8 | ConvertFrom-Json
+$agenciasAntes = $null
+if ($datosPrevios.PSObject.Properties.Name -contains 'agencias') { $agenciasAntes = $datosPrevios.agencias }
+
+Write-Host "  Webs de inmobiliarias..."
+$agenciasAhora = Vigilar-Agencias $agenciasAntes
+$conCambio = @($agenciasAhora | Where-Object { $_.cambio })
+Write-Host ("    {0} vigiladas, {1} con cambios" -f $agenciasAhora.Count, $conCambio.Count)
 
 Write-Host ""
 Write-Host ("Total tras filtrar: {0}" -f $encontrados.Count)
@@ -287,11 +358,18 @@ if ($anadidos.Count -gt 0) {
 # pagina puede decir cuando corrio por ultima vez y que vio: un boton que no
 # deja rastro parece roto aunque haya funcionado.
 $barrido = [pscustomobject]@{
-  fecha     = Get-Date -Format 'yyyy-MM-dd'
-  hora      = Get-Date -Format 'HH:mm'
-  revisados = $encontrados.Count
-  nuevos    = $anadidos.Count
-  portales  = 'Habitaclia y Pisos.com'
+  fecha      = Get-Date -Format 'yyyy-MM-dd'
+  hora       = Get-Date -Format 'HH:mm'
+  revisados  = $encontrados.Count
+  nuevos     = $anadidos.Count
+  portales   = ("Habitaclia, Pisos.com y {0} webs de inmobiliarias" -f $AGENCIAS.Count)
+  agenciasConCambio = @($conCambio | ForEach-Object { $_.nombre })
+}
+
+if ($datos.PSObject.Properties.Name -contains 'agencias') {
+  $datos.agencias = $agenciasAhora
+} else {
+  $datos | Add-Member -NotePropertyName agencias -NotePropertyValue $agenciasAhora
 }
 if ($datos.PSObject.Properties.Name -contains 'barrido') {
   $datos.barrido = $barrido

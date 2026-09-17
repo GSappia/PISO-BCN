@@ -300,6 +300,12 @@
   .cuerpo h3{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
   .cuerpo h3 .barrio{color:var(--ink)}
   .cuerpo h3 .dist{color:var(--muted);font-weight:400}
+  .cuerpo h3 .fuente{
+    font-family:"IBM Plex Sans",sans-serif;font-size:11px;font-weight:500;
+    letter-spacing:.02em;color:var(--accent);background:var(--accent-soft);
+    border-radius:5px;padding:2px 7px;margin-left:8px;white-space:nowrap;
+    display:inline-block;vertical-align:2px;
+  }
   .etiquetas{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;list-style:none;padding:0}
   .etiquetas li{
     font-size:11.5px;border-radius:5px;padding:2px 7px;
@@ -796,6 +802,15 @@
     var sd = document.createElement('span'); sd.className = 'dist';
     sd.textContent = p.barrio && p.distrito ? '  ·  ' + p.distrito : '';
     h3.appendChild(sb); h3.appendChild(sd);
+
+    // De dónde sale la ficha: portal o inmobiliaria.
+    if (p.anunciante){
+      var sf = document.createElement('span');
+      sf.className = 'fuente';
+      sf.textContent = p.anunciante;
+      sf.title = 'Fuente del anuncio';
+      h3.appendChild(sf);
+    }
     cuerpo.appendChild(h3);
 
     var ul = document.createElement('ul');
@@ -812,7 +827,6 @@
     tag(p.tipo);
     tag(p.amueblado ? 'Amueblado: ' + p.amueblado : null, p.amuSi ? 'si' : (p.amuNo ? 'no' : ''));
     tag(p.contrato, p.temporada ? 'temp' : '');
-    tag(p.anunciante);
     tag(p.estado && p.estado !== 'Por contactar' ? p.estado : null);
     cuerpo.appendChild(ul);
 
@@ -947,8 +961,18 @@
       var recuento = b.nuevos > 0
         ? '<b>' + b.nuevos + (b.nuevos === 1 ? ' anuncio nuevo' : ' anuncios nuevos') + '</b>, arriba del todo.'
         : 'ninguno nuevo: ya los tenías todos.';
-      el.innerHTML = '<b>El robot pasó ' + (esHoy ? 'hoy' : 'el ' + dia) + ' a las ' + b.hora + '.</b><br>' +
+      var linea = '<b>El robot pasó ' + (esHoy ? 'hoy' : 'el ' + dia) + ' a las ' + b.hora + '.</b><br>' +
         'Revisó ' + b.revisados + ' anuncios de ' + (b.portales || 'los portales') + ' y ' + recuento;
+
+      // Inmobiliarias vigiladas: lo que importa es cuáles han movido su oferta.
+      var cambios = b.agenciasConCambio || [];
+      if (cambios.length){
+        linea += '<br><b style="color:var(--media)">Han cambiado su oferta: ' +
+          cambios.join(', ') + '.</b> Merece la pena mirarlas.';
+      } else if (DATOS.agencias && DATOS.agencias.length){
+        linea += '<br>' + DATOS.agencias.length + ' inmobiliarias vigiladas, ninguna ha movido su oferta.';
+      }
+      el.innerHTML = linea;
     } else {
       el.innerHTML = '<b>El robot aún no ha pasado.</b><br>' +
         'Busca en Habitaclia y Pisos.com. Idealista y Yaencontre los hago yo.';
