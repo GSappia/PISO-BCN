@@ -1,0 +1,7 @@
+# Nada personal en el repositorio
+*.xlsx
+*.pdf
+documentacion/
+.DS_Store
+Thumbs.db
+desktop.ini
