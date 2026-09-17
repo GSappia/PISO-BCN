@@ -1,0 +1,39 @@
+name: Buscar pisos
+
+# Se lanza de dos maneras:
+#  - A mano, con el boton "Run workflow" (es lo que abre ACTUALIZAR AHORA).
+#  - Solo, cada dia a las 09:00 de Barcelona.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 7 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  buscar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Barrer los portales
+        shell: pwsh
+        run: ./tools/buscar.ps1
+
+      - name: Regenerar la web
+        shell: pwsh
+        run: ./tools/construir.ps1
+
+      - name: Guardar los cambios
+        run: |
+          git config user.name "Robot de pisos"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "Nada nuevo que guardar."
+          else
+            git commit -m "Barrido automatico $(date +'%d/%m/%Y %H:%M')"
+            git push
+          fi
