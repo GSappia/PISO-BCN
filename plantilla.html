@@ -1,0 +1,1358 @@
+<title>Búsqueda de piso BCN</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  :root{
+    --bg:#f1f4f1;
+    --surface:#ffffff;
+    --surface-2:#e9efec;
+    --ink:#101715;
+    --ink-2:#3d4a46;
+    --muted:#697873;
+    --line:#d7e0db;
+    --line-strong:#b9c7c1;
+    --accent:#0c6b5e;
+    --accent-ink:#ffffff;
+    --accent-soft:#dfeeea;
+    --alta:#0c6b5e;
+    --media:#a4701a;
+    --baja:#8d9a95;
+    --fav:#b3322f;
+    --ok:#2c7248;
+    --ok-soft:#dfeee4;
+    --warn:#8d5c0c;
+    --warn-soft:#f6eada;
+    --off:#7c8884;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(16,23,21,.06), 0 8px 20px -14px rgba(16,23,21,.28);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d1211;
+      --surface:#151d1b;
+      --surface-2:#1c2523;
+      --ink:#e8efeb;
+      --ink-2:#c2cfca;
+      --muted:#92a19c;
+      --line:#25302d;
+      --line-strong:#374440;
+      --accent:#54b7a5;
+      --accent-ink:#06211d;
+      --accent-soft:#16312c;
+      --alta:#54b7a5;
+      --media:#d6a95e;
+      --baja:#7d8b86;
+      --fav:#e0736c;
+      --ok:#6bbd8b;
+      --ok-soft:#153025;
+      --warn:#d8a765;
+      --warn-soft:#2c2415;
+      --off:#7d8b86;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1211;
+    --surface:#151d1b;
+    --surface-2:#1c2523;
+    --ink:#e8efeb;
+    --ink-2:#c2cfca;
+    --muted:#92a19c;
+    --line:#25302d;
+    --line-strong:#374440;
+    --accent:#54b7a5;
+    --accent-ink:#06211d;
+    --accent-soft:#16312c;
+    --alta:#54b7a5;
+    --media:#d6a95e;
+    --baja:#7d8b86;
+    --fav:#e0736c;
+    --ok:#6bbd8b;
+    --ok-soft:#153025;
+    --warn:#d8a765;
+    --warn-soft:#2c2415;
+    --off:#7d8b86;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 24px -16px rgba(0,0,0,.8);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size:15px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding-inline:16px}
+  h1,h2,h3{font-family:"Bricolage Grotesque", "IBM Plex Sans", sans-serif;margin:0;text-wrap:balance}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ---------- cabecera ---------- */
+  header.top{
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+  }
+  .top .wrap{padding-block:18px 14px}
+  .eyebrow{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  }
+  h1{font-size:clamp(26px,5vw,38px);font-weight:800;letter-spacing:-.02em;margin-top:6px}
+  .criterios{
+    margin-top:10px;color:var(--ink-2);font-size:13.5px;
+    display:flex;flex-wrap:wrap;gap:6px 14px;
+  }
+  .criterios b{font-weight:600;color:var(--ink)}
+  .sync{
+    display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .sync .dot{width:7px;height:7px;border-radius:50%;background:var(--off)}
+  .sync.on .dot{background:var(--ok)}
+  .sync.off .dot{background:var(--media)}
+
+  /* ---------- acciones de cabecera ---------- */
+  .acciones-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px}
+  .btn-grande{
+    font:inherit;font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    cursor:pointer;background:var(--accent);border:1px solid var(--accent);color:var(--accent-ink);
+    border-radius:8px;padding:9px 16px;display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn-grande:hover{opacity:.9}
+  .btn-grande[disabled]{opacity:.55;cursor:default}
+  .btn-grande.secundario{
+    background:var(--surface);color:var(--ink-2);border-color:var(--line-strong);
+    font-weight:500;letter-spacing:.04em;
+  }
+  .btn-grande.secundario:hover{border-color:var(--accent);color:var(--accent);opacity:1}
+  .estado-act{font-size:12px;color:var(--muted);line-height:1.4}
+  .estado-act b{color:var(--ink-2);font-weight:600}
+  .estado-act.pendiente b{color:var(--media)}
+
+  details.herramienta{position:relative}
+  details.herramienta > summary{list-style:none;cursor:pointer}
+  details.herramienta > summary::-webkit-details-marker{display:none}
+  details.herramienta > summary::marker{content:""}
+  .panel.ancho{min-width:min(420px, calc(100vw - 32px))}
+  .panel h4{
+    font-family:"Bricolage Grotesque",sans-serif;font-size:13px;font-weight:700;
+    margin:0 0 2px;letter-spacing:-.01em;
+  }
+  .panel .ayuda{font-size:11.5px;color:var(--muted);margin:0 0 10px;line-height:1.45}
+
+  .doc-fila{border-top:1px solid var(--line);padding:9px 0}
+  .doc-fila:first-of-type{border-top:0}
+  .doc-cab{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .doc-nombre{font-size:13.5px;font-weight:600;flex:1 1 auto}
+  .doc-meta{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .doc-fila input[type="url"]{
+    width:100%;margin-top:7px;font-size:12.5px;padding:5px 8px;
+    border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);color:var(--ink);
+  }
+  .doc-fila input[type="file"]{display:none}
+  .btn-mini{
+    font:inherit;font-size:11.5px;cursor:pointer;background:var(--surface);color:var(--ink-2);
+    border:1px solid var(--line-strong);border-radius:6px;padding:3px 8px;text-decoration:none;
+    display:inline-flex;align-items:center;gap:4px;
+  }
+  .btn-mini:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-mini.activo{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+
+  .plantilla{border-top:1px solid var(--line);padding:10px 0}
+  .plantilla:first-of-type{border-top:0}
+  .plantilla label{font-size:12.5px;font-weight:600;display:block;margin-bottom:5px}
+  .plantilla textarea{
+    width:100%;min-height:120px;font:inherit;font-size:12.5px;line-height:1.5;
+    border:1px solid var(--line-strong);border-radius:7px;padding:8px;resize:vertical;
+    background:var(--surface);color:var(--ink);
+  }
+  .fichas-clave{font-size:11px;color:var(--muted);margin:6px 0 0;line-height:1.5}
+  .fichas-clave code{
+    background:var(--surface-2);border-radius:4px;padding:1px 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;
+  }
+
+  /* ---------- cifras ---------- */
+  .cifras{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .cifra{
+    background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);
+    padding:8px 12px;min-width:92px;
+  }
+  .cifra b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+  .cifra span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+  /* ---------- barra de filtros ---------- */
+  .barra{
+    position:sticky;top:env(safe-area-inset-top, 0px);z-index:20;
+    background:color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .barra .wrap{padding-block:10px}
+  .fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .fila + .fila{margin-top:8px}
+  input[type="search"], select, input[type="text"]{
+    font:inherit;color:var(--ink);background:var(--surface);
+    border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;
+  }
+  input[type="search"]{flex:1 1 200px;min-width:0}
+  select{padding-right:26px}
+  input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible{
+    outline:2px solid var(--accent);outline-offset:2px;
+  }
+  /* control etiquetado: [ETIQUETA  valor ▾] */
+  .campo{
+    display:flex;align-items:center;gap:7px;background:var(--surface);
+    border:1px solid var(--line-strong);border-radius:8px;padding:2px 6px 2px 10px;
+  }
+  .campo .etq{
+    font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;
+  }
+  .campo select{
+    border:0;background:transparent;padding:5px 2px;font:inherit;color:var(--ink);
+    font-weight:500;max-width:190px;
+  }
+  /* el desplegable de distritos es un <details> nativo */
+  details.campo{padding:0}
+  details.campo > summary{
+    display:flex;align-items:center;gap:7px;cursor:pointer;list-style:none;
+    padding:5px 8px 5px 10px;font-weight:500;
+  }
+  details.campo > summary::-webkit-details-marker{display:none}
+  details.campo > summary::marker{content:""}
+  details.campo > summary .caret{color:var(--muted);font-size:11px}
+  details.campo[open] > summary .caret{transform:rotate(180deg)}
+  details.campo > summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:7px}
+
+  .desplegable{position:relative}
+  .panel{
+    position:absolute;top:calc(100% + 7px);left:0;z-index:40;
+    background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;
+    box-shadow:var(--shadow);padding:10px;
+    min-width:262px;max-width:calc(100vw - 32px);
+    max-height:min(62vh, 420px);overflow:auto;
+  }
+  .panel .atajos{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+  .panel .opcion{
+    display:flex;align-items:center;gap:9px;padding:5px 4px;border-radius:6px;cursor:pointer;
+    font-size:13.5px;
+  }
+  .panel .opcion:hover{background:var(--surface-2)}
+  .panel .opcion input{accent-color:var(--accent);margin:0}
+  .panel .opcion .cuenta{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .panel .opcion.sin .nombre, .panel .opcion.sin .cuenta{opacity:.5}
+  .chip{
+    font:inherit;font-size:12.5px;cursor:pointer;
+    background:var(--surface);color:var(--ink-2);
+    border:1px solid var(--line-strong);border-radius:999px;padding:5px 11px;
+    white-space:nowrap;
+  }
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
+  .chip.grupo{border-style:dashed;font-size:12px}
+  .zona{font-size:9px;vertical-align:.18em;color:var(--accent)}
+  .chip[aria-pressed="true"] .zona{color:var(--accent-ink)}
+  .leyenda{font-size:11.5px;color:var(--muted);margin:8px 2px 0;line-height:1.4}
+  .leyenda b{color:var(--accent);font-weight:600}
+  .rotulo-vista{
+    font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    margin-right:2px;white-space:nowrap;
+  }
+  .sep{flex:1 1 auto}
+
+  /* ---------- pestañas ---------- */
+  .tabs{display:flex;gap:4px;margin-top:14px;border-bottom:1px solid var(--line)}
+  .tab{
+    font:inherit;font-size:13.5px;cursor:pointer;background:none;border:0;
+    padding:8px 12px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+
+  /* ---------- lista ---------- */
+  main .wrap{padding-block:18px 60px}
+  .lista{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .ficha{
+    display:grid;
+    grid-template-columns:104px minmax(0,1fr) auto;
+    gap:14px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-left:3px solid var(--baja);
+    border-radius:var(--radius);
+    padding:12px 14px;
+  }
+  .ficha.pri-ALTA{border-left-color:var(--alta)}
+  .ficha.pri-MEDIA{border-left-color:var(--media)}
+  .ficha.es-fav{box-shadow:var(--shadow)}
+  .ficha.es-hablado{background:var(--ok-soft)}
+  .ficha.es-descartado{opacity:.5}
+  .ficha.es-descartado .precio b, .ficha.es-descartado h3{text-decoration:line-through}
+
+  .precio{display:flex;flex-direction:column;gap:2px}
+  .precio b{
+    font-family:"Bricolage Grotesque",sans-serif;font-size:22px;font-weight:700;
+    font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1.15;
+  }
+  .precio span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .precio .m2{font-size:12px;color:var(--muted)}
+
+  .cuerpo{min-width:0}
+  .cuerpo h3{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
+  .cuerpo h3 .barrio{color:var(--ink)}
+  .cuerpo h3 .dist{color:var(--muted);font-weight:400}
+  .etiquetas{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;list-style:none;padding:0}
+  .etiquetas li{
+    font-size:11.5px;border-radius:5px;padding:2px 7px;
+    background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line);
+  }
+  .etiquetas li.si{background:var(--ok-soft);color:var(--ok);border-color:transparent;font-weight:500}
+  .etiquetas li.no{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+  .etiquetas li.temp{background:var(--warn-soft);color:var(--warn);border-color:transparent;font-weight:500}
+  .etiquetas li.nueva{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
+  .notas{margin:8px 0 0;font-size:13px;color:var(--ink-2);line-height:1.5}
+  .mi-nota{margin-top:8px;width:100%;font-size:13px;padding:5px 8px}
+
+  .acciones{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:132px}
+  .acciones .par{display:flex;gap:6px}
+  .btn{
+    font:inherit;font-size:12.5px;cursor:pointer;text-align:center;text-decoration:none;
+    background:var(--surface);color:var(--ink-2);
+    border:1px solid var(--line-strong);border-radius:7px;padding:5px 9px;
+    display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  }
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.principal{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
+  .btn.principal:hover{color:var(--accent-ink);opacity:.9}
+  .btn-fav{font-size:15px;line-height:1;padding:5px 9px}
+  .ficha.es-fav .btn-fav{color:var(--fav);border-color:var(--fav)}
+  .ficha.es-hablado .btn-hablado{background:var(--ok);border-color:var(--ok);color:#fff}
+  .ficha.es-descartado .btn-descartar{background:var(--surface-2)}
+
+  .vacio{text-align:center;color:var(--muted);padding:48px 0;font-size:14px}
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:28px;padding-top:14px}
+  footer a{color:var(--accent)}
+
+  #toast{
+    position:fixed;left:50%;transform:translateX(-50%);
+    bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+    background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;
+    font-size:13px;z-index:60;opacity:0;pointer-events:none;transition:opacity .18s ease;
+  }
+  #toast.ver{opacity:1}
+  @media (prefers-reduced-motion: reduce){#toast{transition:none}}
+
+  @media (max-width:720px){
+    .ficha{grid-template-columns:1fr;gap:10px}
+    .precio{flex-direction:row;align-items:baseline;gap:10px}
+    .acciones{flex-direction:row;flex-wrap:wrap;min-width:0}
+    .acciones .par{flex:1 1 auto}
+    .btn{flex:1 1 auto}
+  }
+</style>
+<!--FIN-HEAD-->
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">
+      <span>Barcelona · alquiler</span>
+      <span id="fecha-gen"></span>
+      <span class="sync" id="sync"><span class="dot"></span><span id="sync-txt">conectando</span></span>
+    </p>
+    <h1>Búsqueda de piso BCN</h1>
+    <p class="criterios">
+      <span><b>1 dormitorio</b> o estudio</span>
+      <span><b>Amueblado</b> obligatorio</span>
+      <span>Contrato <b>LAU de vivienda habitual</b>, no temporada</span>
+      <span>Hasta <b>1.300 €/mes</b> (ideal 800–950)</span>
+      <span>Entrada <b>octubre–diciembre</b></span>
+    </p>
+    <div class="acciones-top">
+      <button class="btn-grande" type="button" id="btn-actualizar">Actualizar ahora</button>
+
+      <details class="herramienta" id="dd-docs">
+        <summary class="btn-grande secundario">Mi documentación <span class="caret" aria-hidden="true">▾</span></summary>
+        <div class="panel ancho">
+          <h4>Mi documentación</h4>
+          <p class="ayuda">
+            Guarda aquí tus PDF para tenerlos a mano desde el móvil. Ojo: el enlace del PDF subido
+            solo lo abre tu cuenta, así que para mandárselo a un propietario pega debajo el enlace
+            de OneDrive o Drive, que es el que sí podrá abrir.
+          </p>
+          <div id="docs-lista"></div>
+          <div style="margin-top:10px">
+            <button class="btn-mini" type="button" id="copiar-docs">Copiar mis enlaces</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="herramienta" id="dd-msg">
+        <summary class="btn-grande secundario">Mis mensajes <span class="caret" aria-hidden="true">▾</span></summary>
+        <div class="panel ancho">
+          <h4>Mensajes preescritos</h4>
+          <p class="ayuda">
+            Edítalos a tu gusto: se guardan solos y viajan contigo entre el móvil y el ordenador.
+            Los botones de cada ficha rellenan los huecos con los datos de ese piso.
+          </p>
+          <div id="plantillas"></div>
+          <p class="fichas-clave">
+            Huecos disponibles: <code>{{barrio}}</code> <code>{{distrito}}</code>
+            <code>{{precio}}</code> <code>{{m2}}</code> <code>{{tipo}}</code>
+            <code>{{enlace}}</code> <code>{{docs}}</code>
+          </p>
+        </div>
+      </details>
+
+      <p class="estado-act" id="estado-act"></p>
+    </div>
+
+    <div class="cifras" id="cifras"></div>
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tab-p" role="tab" aria-selected="true" data-grupo="pisos">Pisos</button>
+      <button class="tab" id="tab-c" role="tab" aria-selected="false" data-grupo="colivings">Colivings y suites</button>
+    </div>
+  </div>
+</header>
+
+<div class="barra">
+  <div class="wrap">
+    <div class="fila">
+      <input type="search" id="q" placeholder="Buscar por barrio, calle, anunciante o nota…" aria-label="Buscar">
+
+      <details class="campo desplegable" id="dd-distritos">
+        <summary>
+          <span class="etq">Distritos</span>
+          <span id="val-distritos">Toda Barcelona</span>
+          <span class="caret" aria-hidden="true">▾</span>
+        </summary>
+        <div class="panel" id="panel-distritos"></div>
+      </details>
+
+      <details class="campo desplegable" id="dd-hab">
+        <summary>
+          <span class="etq">Habitaciones</span>
+          <span id="val-hab">Estudio o 1 dorm.</span>
+          <span class="caret" aria-hidden="true">▾</span>
+        </summary>
+        <div class="panel" id="panel-hab"></div>
+      </details>
+
+      <label class="campo" for="precio-max">
+        <span class="etq">Precio máx.</span>
+        <select id="precio-max">
+          <option value="800">800 €</option>
+          <option value="900">900 €</option>
+          <option value="950">950 €</option>
+          <option value="1000">1.000 €</option>
+          <option value="1100">1.100 €</option>
+          <option value="1200">1.200 €</option>
+          <option value="1300" selected>1.300 €</option>
+          <option value="99999">Sin límite</option>
+        </select>
+      </label>
+
+      <label class="campo" for="amueblado">
+        <span class="etq">Amueblado</span>
+        <select id="amueblado">
+          <option value="">Indiferente</option>
+          <option value="si">Sí</option>
+          <option value="no">No</option>
+          <option value="duda">Por confirmar</option>
+        </select>
+      </label>
+
+      <label class="campo" for="orden">
+        <span class="etq">Orden</span>
+        <select id="orden">
+          <option value="prioridad">Prioridad</option>
+          <option value="ratio">€/m²</option>
+          <option value="precio-asc">Precio ↑</option>
+          <option value="precio-desc">Precio ↓</option>
+          <option value="m2">m² ↓</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="fila">
+      <span class="rotulo-vista">Ver</span>
+      <button class="chip" id="f-temp" aria-pressed="true" data-filtro="temp">Ocultar temporada</button>
+      <button class="chip" id="f-desc" aria-pressed="true" data-filtro="desc">Ocultar descartados</button>
+      <button class="chip" id="f-hab" aria-pressed="false" data-filtro="hab">Ocultar los que ya hablé</button>
+      <button class="chip" id="f-fav" aria-pressed="false" data-filtro="fav">Solo favoritos</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="wrap">
+    <div class="lista" id="lista"></div>
+    <p class="vacio" id="vacio" hidden>Ningún anuncio pasa estos filtros. Prueba a subir el precio o a quitar alguna condición.</p>
+    <footer>
+      <p id="pie"></p>
+      <p>Tus marcas (favorito, ya hablé, descartado y notas) se guardan en esta página y viajan contigo entre el móvil y el ordenador.</p>
+    </footer>
+  </div>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script id="datos" type="application/json">__DATOS__</script>
+<script>
+(function(){
+  "use strict";
+  var DATOS = JSON.parse(document.getElementById('datos').textContent);
+  var GRUPOS = { pisos: DATOS.pisos, colivings: DATOS.colivings };
+  var grupoActivo = 'pisos';
+  var marcas = {};           // id -> {fav, hablado, descartado, nota}
+  var db = null;
+  var assets = null;
+  var timers = {};
+
+  // Documentación que se puede guardar, en el orden en que se pide.
+  // ¿Corre dentro de claude.ai (con sincronización y subida de ficheros)
+  // o como página suelta en GitHub Pages / doble clic?
+  var EN_CLAUDE = !!(window.claude && window.claude.use);
+
+  var DOCS = [
+    { k:'contrato', n:'Contrato de trabajo' },
+    { k:'nominas',  n:'Últimas nóminas' },
+    { k:'dni',      n:'DNI o NIE' },
+    { k:'otros',    n:'Otros (vida laboral, referencias…)' }
+  ];
+  var docs = {};             // clave -> {assetId, archivo, bytes, enlace}
+
+  var PLANTILLAS = [
+    { k:'primerContacto', n:'Primer contacto' },
+    { k:'perfil',         n:'Enviar mi perfil' },
+    { k:'visita',         n:'Confirmar visita' }
+  ];
+  var TEXTOS_POR_DEFECTO = {
+    primerContacto:
+      'Hola, buenos días.\n\n' +
+      'Escribo por el piso de {{barrio}} de {{precio}}/mes ({{enlace}}). ¿Sigue disponible?\n\n' +
+      'Busco vivienda habitual de larga duración (contrato LAU, no de temporada), para entrar entre ' +
+      'octubre y diciembre. ¿Podríais confirmarme el tipo de contrato, si se entrega amueblado y qué ' +
+      'documentación pedís?\n\n' +
+      'Me gustaría concertar una visita esta semana. Muchas gracias.',
+    perfil:
+      'Hola, buenos días.\n\n' +
+      'Escribo por el piso de {{barrio}} ({{distrito}}) de {{precio}}/mes, {{m2}} — {{enlace}}\n\n' +
+      'Os paso mi perfil para agilizar:\n' +
+      '· Trabajo en [tu empresa], contrato [indefinido / temporal] desde [mes y año].\n' +
+      '· Ingresos: [importe] € netos al mes.\n' +
+      '· Ocuparía la vivienda [1 persona], sin mascotas y sin fumar.\n' +
+      '· Entrada deseada: entre octubre y diciembre.\n' +
+      '· Documentación lista: contrato de trabajo, últimas nóminas y DNI/NIE.\n\n' +
+      '{{docs}}\n\n' +
+      'Busco vivienda habitual de larga duración (contrato LAU, no de temporada). ¿Podríais ' +
+      'confirmarme el tipo de contrato y si el piso se entrega amueblado?\n\n' +
+      'Quedo a la espera para concertar la visita. Muchas gracias.',
+    visita:
+      'Hola, buenos días.\n\n' +
+      'Confirmo la visita al piso de {{barrio}} ({{precio}}/mes) el [día] a las [hora]. ' +
+      'Mi teléfono es [teléfono] por si necesitáis avisarme de cualquier cambio.\n\n' +
+      'Llevaré la documentación impresa. Hasta entonces, gracias.'
+  };
+  var plantillas = {
+    primerContacto: TEXTOS_POR_DEFECTO.primerContacto,
+    perfil: TEXTOS_POR_DEFECTO.perfil,
+    visita: TEXTOS_POR_DEFECTO.visita
+  };
+
+  var actualizacion = null;  // {estado, pedidoEn, hechoEn, resumen}
+
+  var $ = function(s){ return document.querySelector(s); };
+  var lista = $('#lista'), vacio = $('#vacio'), cifras = $('#cifras');
+
+  // ---------- utilidades ----------
+  function eur(n){ return n == null ? '—' : n.toLocaleString('es-ES') + ' €'; }
+  function dec(n){ return n == null ? '—' : n.toLocaleString('es-ES', {minimumFractionDigits:1, maximumFractionDigits:1}); }
+  // Reduce el "Tipo" del tracker a un grupo de habitaciones.
+  function grupoHab(p){
+    var t = (p.tipo || '').toLowerCase();
+    var m = t.match(/(\d+)\s*hab/);
+    if (m){ var n = +m[1]; return n === 1 ? '1' : (n === 2 ? '2' : '3+'); }
+    if (/habitaci/.test(t)) return 'habitacion';
+    if (/estudio|loft|suite|coliving|monoambiente/.test(t)) return 'estudio';
+    return 'nd';
+  }
+  function marca(id){
+    var m = marcas[id];
+    if (m) return m;
+    var base = todos().find(function(x){ return x.id === id; });
+    return { fav:false, hablado:false, descartado: !!(base && base.estado === 'Descartado'), nota:'' };
+  }
+  function todos(){ return GRUPOS.pisos.concat(GRUPOS.colivings); }
+  function toast(txt){
+    var t = $('#toast'); t.textContent = txt; t.classList.add('ver');
+    clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove('ver'); }, 2200);
+  }
+
+  // ---------- persistencia ----------
+  function guardaLocal(){
+    try { localStorage.setItem('marcas-piso-bcn', JSON.stringify(marcas)); } catch(e){}
+  }
+  function leeLocal(){
+    try {
+      var v = localStorage.getItem('marcas-piso-bcn');
+      if (v) marcas = JSON.parse(v) || {};
+    } catch(e){}
+  }
+  function sync(estado, txt){
+    var el = $('#sync'); el.className = 'sync ' + estado; $('#sync-txt').textContent = txt;
+  }
+  function escribe(id){
+    var m = marca(id);
+    marcas[id] = m;
+    guardaLocal();
+    if (!db) return;
+    clearTimeout(timers[id]);
+    timers[id] = setTimeout(function(){
+      db.collection('marcas').doc(id).set({
+        fav: !!m.fav, hablado: !!m.hablado, descartado: !!m.descartado,
+        nota: m.nota || '', ts: Date.now()
+      }).catch(function(){ sync('off', 'solo este navegador'); });
+    }, 350);
+  }
+
+  (async function(){
+    try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; }
+    catch(e){ db = null; }
+    if (!db){ sync('off', 'solo este navegador'); return; }
+    sync('on', 'sincronizado');
+
+    db.collection('marcas').onSnapshot(function(snap){
+      snap.docs.forEach(function(d){
+        var v = d.data() || {};
+        marcas[d.id] = {
+          fav: !!v.fav, hablado: !!v.hablado, descartado: !!v.descartado, nota: v.nota || ''
+        };
+      });
+      guardaLocal();
+      pinta();
+    }, function(){ sync('off', 'solo este navegador'); });
+
+    db.doc('sistema/actualizacion').onSnapshot(function(snap){
+      actualizacion = snap.exists ? snap.data() : null;
+      pintaEstadoActualizacion();
+    }, function(){});
+
+    db.collection('docs').onSnapshot(function(snap){
+      docs = {};
+      snap.docs.forEach(function(d){ docs[d.id] = d.data() || {}; });
+      pintaDocs();
+    }, function(){});
+
+    db.doc('mensajes/plantillas').onSnapshot(function(snap){
+      if (snap.exists){
+        var v = snap.data() || {};
+        PLANTILLAS.forEach(function(p){
+          if (typeof v[p.k] === 'string' && v[p.k].length) plantillas[p.k] = v[p.k];
+        });
+        pintaPlantillas();
+      }
+    }, function(){});
+  })();
+
+  // ---------- filtros ----------
+  var filtros = { temp:true, desc:true, hab:false, fav:false };
+  var distritos = [], texto = '', precioMax = 1300, orden = 'prioridad';
+  var amuSel = '';
+
+  // Grupos de habitaciones. 'nd' son los anuncios que no lo dicen.
+  var HABS = [
+    { k:'estudio',    n:'Estudio, loft o suite' },
+    { k:'1',          n:'1 dormitorio' },
+    { k:'2',          n:'2 dormitorios' },
+    { k:'3+',         n:'3 o más' },
+    { k:'habitacion', n:'Habitación en piso compartido' },
+    { k:'nd',         n:'No lo indica' }
+  ];
+  var HAB_CRITERIO = ['estudio', '1', 'nd'];
+  var habs = HAB_CRITERIO.slice();
+
+  // Los 10 distritos de Barcelona, en orden oficial.
+  // z: 'p' = zona prioritaria, 's' = zona secundaria (según los criterios de la búsqueda).
+  var DISTRITOS = [
+    { n:'Ciutat Vella',          z:''  },
+    { n:'Eixample',              z:'p' },
+    { n:'Sants-Montjuïc',        z:'s' },
+    { n:'Les Corts',             z:'p' },
+    { n:'Sarrià-Sant Gervasi',   z:'p' },
+    { n:'Gràcia',                z:'p' },
+    { n:'Horta-Guinardó',        z:'s' },
+    { n:'Nou Barris',            z:''  },
+    { n:'Sant Andreu',           z:''  },
+    { n:'Sant Martí',            z:'s' }
+  ];
+
+  function pasa(p){
+    var m = marca(p.id);
+    if (filtros.fav && !m.fav) return false;
+    if (filtros.desc && m.descartado) return false;
+    if (filtros.hab && m.hablado) return false;
+    if (filtros.temp && p.temporada) return false;
+
+    if (amuSel === 'si' && !p.amuSi) return false;
+    if (amuSel === 'no' && !p.amuNo) return false;
+    if (amuSel === 'duda' && (p.amuSi || p.amuNo)) return false;
+
+    if (habs.length && habs.indexOf(grupoHab(p)) === -1) return false;
+
+    if (p.precio != null && p.precio > precioMax) return false;
+    if (distritos.length && distritos.indexOf(p.distrito) === -1) return false;
+    if (texto){
+      var heno = [p.barrio, p.distrito, p.tipo, p.anunciante, p.contrato, p.notas, p.amueblado, m.nota].join(' ').toLowerCase();
+      if (heno.indexOf(texto) === -1) return false;
+    }
+    return true;
+  }
+
+  var pesoPri = { ALTA:0, MEDIA:1, BAJA:2, '':3 };
+  function ordena(a, b){
+    if (orden === 'precio-asc') return (a.precio||9e9) - (b.precio||9e9);
+    if (orden === 'precio-desc') return (b.precio||0) - (a.precio||0);
+    if (orden === 'm2') return (b.m2||0) - (a.m2||0);
+    if (orden === 'ratio') return (a.ratio||9e9) - (b.ratio||9e9);
+    if (a.nuevo !== b.nuevo) return a.nuevo ? -1 : 1;
+    var d = (pesoPri[a.prioridad] == null ? 3 : pesoPri[a.prioridad]) - (pesoPri[b.prioridad] == null ? 3 : pesoPri[b.prioridad]);
+    if (d) return d;
+    return (a.ratio||9e9) - (b.ratio||9e9);
+  }
+
+  // ---------- mensajes ----------
+  function enlacesDocumentacion(){
+    var lineas = [];
+    DOCS.forEach(function(d){
+      var v = docs[d.k];
+      if (v && v.enlace) lineas.push('· ' + d.n + ': ' + v.enlace);
+    });
+    if (!lineas.length){
+      return 'Os envío la documentación por correo en cuanto me digáis a qué dirección.';
+    }
+    return 'Podéis descargar mi documentación aquí:\n' + lineas.join('\n');
+  }
+
+  function mensaje(clave, p){
+    var txt = plantillas[clave] || '';
+    var valores = {
+      barrio:   p ? (p.barrio || p.distrito || 'Barcelona') : '',
+      distrito: p ? (p.distrito || '') : '',
+      precio:   p ? eur(p.precio) : '',
+      m2:       p && p.m2 ? p.m2 + ' m²' : 'superficie por confirmar',
+      tipo:     p ? (p.tipo || '') : '',
+      enlace:   p ? (p.url || 'sin enlace') : '',
+      docs:     enlacesDocumentacion()
+    };
+    return txt.replace(/\{\{(\w+)\}\}/g, function(todo, clave2){
+      return valores[clave2] != null ? valores[clave2] : todo;
+    });
+  }
+
+  function copia(txt){
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ toast('Mensaje copiado'); },
+        function(){ copiaViejo(txt); });
+    } else { copiaViejo(txt); }
+  }
+  function copiaViejo(txt){
+    var ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Mensaje copiado'); }
+    catch(e){ toast('No he podido copiarlo'); }
+    document.body.removeChild(ta);
+  }
+
+  // ---------- pintado ----------
+  function pinta(){
+    var datos = GRUPOS[grupoActivo].slice().filter(pasa).sort(ordena);
+    lista.textContent = '';
+    datos.forEach(function(p){ lista.appendChild(ficha(p)); });
+    vacio.hidden = datos.length > 0;
+    pintaCifras(datos.length);
+  }
+
+  function ficha(p){
+    var m = marca(p.id);
+    var el = document.createElement('article');
+    el.className = 'ficha pri-' + (p.prioridad || 'BAJA') +
+      (m.fav ? ' es-fav' : '') + (m.hablado ? ' es-hablado' : '') + (m.descartado ? ' es-descartado' : '');
+    el.dataset.id = p.id;
+
+    var precio = document.createElement('div');
+    precio.className = 'precio';
+    var b = document.createElement('b'); b.className = 'num'; b.textContent = eur(p.precio);
+    var r = document.createElement('span'); r.className = 'num';
+    r.textContent = p.ratio ? dec(p.ratio) + ' €/m²' : 'sin m²';
+    var mm = document.createElement('span'); mm.className = 'm2 num';
+    mm.textContent = p.m2 ? p.m2 + ' m²' : '';
+    precio.appendChild(b); precio.appendChild(r); if (p.m2) precio.appendChild(mm);
+
+    var cuerpo = document.createElement('div');
+    cuerpo.className = 'cuerpo';
+    var h3 = document.createElement('h3');
+    var sb = document.createElement('span'); sb.className = 'barrio'; sb.textContent = p.barrio || p.distrito || 'Barcelona';
+    var sd = document.createElement('span'); sd.className = 'dist';
+    sd.textContent = p.barrio && p.distrito ? '  ·  ' + p.distrito : '';
+    h3.appendChild(sb); h3.appendChild(sd);
+    cuerpo.appendChild(h3);
+
+    var ul = document.createElement('ul');
+    ul.className = 'etiquetas';
+    function tag(txt, cls){
+      if (!txt) return;
+      var li = document.createElement('li');
+      if (cls) li.className = cls;
+      li.textContent = txt;
+      ul.appendChild(li);
+    }
+    if (p.nuevo) tag('Nuevo hoy', 'nueva');
+    tag(p.tipo);
+    tag(p.amueblado ? 'Amueblado: ' + p.amueblado : null, p.amuSi ? 'si' : (p.amuNo ? 'no' : ''));
+    tag(p.contrato, p.temporada ? 'temp' : '');
+    tag(p.anunciante);
+    tag(p.estado && p.estado !== 'Por contactar' ? p.estado : null);
+    cuerpo.appendChild(ul);
+
+    if (p.notas){
+      var nt = document.createElement('p'); nt.className = 'notas'; nt.textContent = p.notas;
+      cuerpo.appendChild(nt);
+    }
+
+    var nota = document.createElement('input');
+    nota.type = 'text'; nota.className = 'mi-nota'; nota.id = 'nota-' + p.id;
+    nota.placeholder = 'Tu nota: a quién escribiste, qué te dijeron…';
+    nota.value = m.nota || '';
+    nota.addEventListener('input', function(){
+      var mm2 = marca(p.id); mm2.nota = nota.value; marcas[p.id] = mm2; escribe(p.id);
+    });
+    cuerpo.appendChild(nota);
+
+    var acc = document.createElement('div');
+    acc.className = 'acciones';
+    var par1 = document.createElement('div'); par1.className = 'par';
+
+    var bFav = document.createElement('button');
+    bFav.className = 'btn btn-fav'; bFav.type = 'button';
+    bFav.title = 'Marcar como favorito';
+    bFav.setAttribute('aria-label', 'Favorito');
+    bFav.textContent = m.fav ? '♥' : '♡';
+    bFav.addEventListener('click', function(){
+      var mm2 = marca(p.id); mm2.fav = !mm2.fav; marcas[p.id] = mm2; escribe(p.id); pinta();
+    });
+
+    var bAbrir = document.createElement('a');
+    bAbrir.className = 'btn principal';
+    bAbrir.textContent = 'Abrir anuncio ↗';
+    bAbrir.href = p.url || '#';
+    bAbrir.target = '_blank'; bAbrir.rel = 'noopener noreferrer';
+    if (!p.url){ bAbrir.textContent = 'Sin enlace'; bAbrir.removeAttribute('href'); }
+    par1.appendChild(bFav); par1.appendChild(bAbrir);
+
+    var bHab = document.createElement('button');
+    bHab.className = 'btn btn-hablado'; bHab.type = 'button';
+    bHab.textContent = m.hablado ? '✓ Ya hablé' : 'Ya hablé';
+    bHab.addEventListener('click', function(){
+      var mm2 = marca(p.id); mm2.hablado = !mm2.hablado; marcas[p.id] = mm2; escribe(p.id); pinta();
+    });
+
+    var bCop = document.createElement('button');
+    bCop.className = 'btn'; bCop.type = 'button'; bCop.textContent = 'Primer contacto';
+    bCop.title = 'Copia el mensaje de primer contacto con los datos de este piso';
+    bCop.addEventListener('click', function(){ copia(mensaje('primerContacto', p)); });
+
+    var bPerfil = document.createElement('button');
+    bPerfil.className = 'btn principal'; bPerfil.type = 'button';
+    bPerfil.textContent = 'Enviar mi perfil';
+    bPerfil.title = 'Copia tu perfil completo y los enlaces de tu documentación';
+    bPerfil.addEventListener('click', function(){
+      copia(mensaje('perfil', p));
+      var mm2 = marca(p.id);
+      if (!mm2.hablado){ mm2.hablado = true; marcas[p.id] = mm2; escribe(p.id); pinta(); }
+    });
+
+    var bDes = document.createElement('button');
+    bDes.className = 'btn btn-descartar'; bDes.type = 'button';
+    bDes.textContent = m.descartado ? 'Recuperar' : 'Descartar';
+    bDes.addEventListener('click', function(){
+      var mm2 = marca(p.id); mm2.descartado = !mm2.descartado; marcas[p.id] = mm2; escribe(p.id); pinta();
+    });
+
+    acc.appendChild(par1); acc.appendChild(bPerfil); acc.appendChild(bCop);
+    acc.appendChild(bHab); acc.appendChild(bDes);
+
+    el.appendChild(precio); el.appendChild(cuerpo); el.appendChild(acc);
+    return el;
+  }
+
+  function pintaCifras(visibles){
+    var g = GRUPOS[grupoActivo];
+    var favs = 0, habs = 0, descs = 0, amu = 0;
+    g.forEach(function(p){
+      var m = marca(p.id);
+      if (m.fav) favs++;
+      if (m.hablado) habs++;
+      if (m.descartado) descs++;
+      if (p.amuSi && !p.temporada && !m.descartado) amu++;
+    });
+    var filas = [
+      [visibles, 'a la vista'],
+      [amu, 'amuebladas vivas'],
+      [favs, 'favoritas'],
+      [habs, 'contactadas'],
+      [descs, 'descartadas'],
+      [g.length, 'fichas en total']
+    ];
+    cifras.textContent = '';
+    filas.forEach(function(f){
+      var d = document.createElement('div'); d.className = 'cifra';
+      var b = document.createElement('b'); b.textContent = f[0];
+      var s = document.createElement('span'); s.textContent = f[1];
+      d.appendChild(b); d.appendChild(s); cifras.appendChild(d);
+    });
+  }
+
+  // ---------- actualizar ahora ----------
+  function cuando(ts){
+    if (!ts) return '';
+    var d = new Date(ts), hoy = new Date();
+    var hora = d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+    var mismoDia = d.toDateString() === hoy.toDateString();
+    return mismoDia ? 'hoy a las ' + hora
+      : d.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'}) + ' a las ' + hora;
+  }
+
+  function pintaEstadoActualizacion(){
+    var el = $('#estado-act'), btn = $('#btn-actualizar');
+    var a = actualizacion || {};
+    el.textContent = '';
+    el.className = 'estado-act';
+
+    if (a.estado === 'pendiente'){
+      el.className = 'estado-act pendiente';
+      el.innerHTML = '<b>Actualización pedida ' + cuando(a.pedidoEn) + '.</b><br>' +
+        'Se lanza desde el Chrome de tu ordenador; el resultado aparece aquí solo.';
+      btn.disabled = true;
+      btn.textContent = 'Actualización pedida';
+      return;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Actualizar ahora';
+    if (a.hechoEn){
+      el.innerHTML = '<b>Último barrido: ' + cuando(a.hechoEn) + '.</b><br>' +
+        (a.resumen ? String(a.resumen) : 'Idealista, Habitaclia, Pisos.com, Enalquiler y Yaencontre.');
+    } else {
+      el.innerHTML = '<b>Último barrido: 17/09/2026.</b><br>' +
+        '5 portales y 16 webs de inmobiliarias.';
+    }
+  }
+
+  $('#btn-actualizar').addEventListener('click', function(){
+    var pedido = { estado:'pendiente', pedidoEn: Date.now() };
+    actualizacion = pedido;
+    pintaEstadoActualizacion();
+    try { localStorage.setItem('actualizacion-piso-bcn', JSON.stringify(pedido)); } catch(e){}
+    if (db){
+      db.doc('sistema/actualizacion').set(pedido).then(
+        function(){ toast('Actualización pedida'); },
+        function(){ toast('No he podido apuntar la petición'); });
+    } else {
+      toast('Actualización pedida');
+    }
+  });
+
+  // ---------- documentación ----------
+  function pesoLegible(b){
+    if (!b) return '';
+    return b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.round(b / 1024) + ' KB';
+  }
+
+  function guardaDoc(clave, datos){
+    docs[clave] = datos;
+    pintaDocs();
+    if (!db) return;
+    db.doc('docs/' + clave).set(datos).catch(function(){ toast('No he podido guardarlo'); });
+  }
+
+  var ERRORES_SUBIDA = {
+    too_large: 'El fichero pasa de 20 MB.',
+    unsupported_type: 'Solo admite PDF e imágenes.',
+    quota_or_state: 'Se ha llenado el espacio de esta página.',
+    rate_limited: 'Demasiadas subidas seguidas; espera un momento.',
+    not_granted: 'Esta vista no puede guardar ficheros.'
+  };
+
+  function subeDoc(clave, file){
+    (async function(){
+      if (!assets){
+        try { assets = window.claude && window.claude.use ? await window.claude.use('assets') : null; }
+        catch(e){ assets = null; }
+      }
+      if (!assets){ toast('No puedo guardar ficheros en esta vista'); return; }
+      var tipo = file.type;
+      if (!tipo && /\.pdf$/i.test(file.name)) tipo = 'application/pdf';
+      toast('Subiendo ' + file.name + '…');
+      try {
+        var r = await assets.upload(file, tipo ? { type: tipo } : undefined);
+        var previo = docs[clave] || {};
+        guardaDoc(clave, {
+          assetId: r.id, archivo: file.name, bytes: r.sizeBytes,
+          enlace: previo.enlace || '', subidoEn: Date.now()
+        });
+        toast(file.name + ' guardado');
+      } catch (e){
+        toast(ERRORES_SUBIDA[e && e.code] || 'No he podido subirlo');
+      }
+    })();
+  }
+
+  function pintaDocs(){
+    var cont = $('#docs-lista');
+    if (!cont) return;
+    cont.textContent = '';
+
+    DOCS.forEach(function(d){
+      var v = docs[d.k] || {};
+      var fila = document.createElement('div');
+      fila.className = 'doc-fila';
+
+      var cab = document.createElement('div');
+      cab.className = 'doc-cab';
+
+      var nom = document.createElement('span');
+      nom.className = 'doc-nombre';
+      nom.textContent = d.n;
+      cab.appendChild(nom);
+
+      if (v.assetId){
+        var ver = document.createElement('a');
+        ver.className = 'btn-mini activo';
+        ver.href = '/_blob/' + v.assetId;
+        ver.target = '_blank'; ver.rel = 'noopener noreferrer';
+        ver.textContent = 'Abrir';
+        cab.appendChild(ver);
+
+        var meta = document.createElement('span');
+        meta.className = 'doc-meta';
+        meta.textContent = (v.archivo || '') + (v.bytes ? ' · ' + pesoLegible(v.bytes) : '');
+        cab.appendChild(meta);
+      }
+
+      var file = document.createElement('input');
+      file.type = 'file';
+      file.accept = '.pdf,application/pdf,image/*';
+      file.id = 'file-' + d.k;
+      file.addEventListener('change', function(){
+        if (file.files && file.files[0]) subeDoc(d.k, file.files[0]);
+        file.value = '';
+      });
+
+      if (EN_CLAUDE){
+        var subir = document.createElement('button');
+        subir.className = 'btn-mini'; subir.type = 'button';
+        subir.textContent = v.assetId ? 'Cambiar' : 'Subir PDF';
+        subir.addEventListener('click', function(){ file.click(); });
+        cab.appendChild(subir);
+      }
+
+      fila.appendChild(cab);
+      fila.appendChild(file);
+
+      var enlace = document.createElement('input');
+      enlace.type = 'url';
+      enlace.id = 'enlace-' + d.k;
+      enlace.placeholder = 'Enlace para compartir (OneDrive, Drive…)';
+      enlace.value = v.enlace || '';
+      enlace.addEventListener('input', function(){
+        clearTimeout(timers['doc-' + d.k]);
+        timers['doc-' + d.k] = setTimeout(function(){
+          var actual = docs[d.k] || {};
+          actual.enlace = enlace.value.trim();
+          docs[d.k] = actual;
+          if (db) db.doc('docs/' + d.k).set(actual).catch(function(){});
+        }, 500);
+      });
+      fila.appendChild(enlace);
+
+      cont.appendChild(fila);
+    });
+  }
+
+  $('#copiar-docs').addEventListener('click', function(){ copia(enlacesDocumentacion()); });
+
+  // ---------- plantillas de mensaje ----------
+  function pintaPlantillas(){
+    var cont = $('#plantillas');
+    if (!cont) return;
+    cont.textContent = '';
+
+    PLANTILLAS.forEach(function(p){
+      var caja = document.createElement('div');
+      caja.className = 'plantilla';
+
+      var lab = document.createElement('label');
+      lab.textContent = p.n;
+      lab.htmlFor = 'txt-' + p.k;
+
+      var ta = document.createElement('textarea');
+      ta.id = 'txt-' + p.k;
+      ta.value = plantillas[p.k] || '';
+      ta.addEventListener('input', function(){
+        plantillas[p.k] = ta.value;
+        clearTimeout(timers['msg']);
+        timers['msg'] = setTimeout(function(){
+          if (db) db.doc('mensajes/plantillas').set({
+            primerContacto: plantillas.primerContacto,
+            perfil: plantillas.perfil,
+            visita: plantillas.visita,
+            ts: Date.now()
+          }).catch(function(){});
+        }, 600);
+      });
+
+      var acciones = document.createElement('div');
+      acciones.style.marginTop = '6px';
+      acciones.style.display = 'flex';
+      acciones.style.gap = '6px';
+
+      var copiar = document.createElement('button');
+      copiar.className = 'btn-mini'; copiar.type = 'button'; copiar.textContent = 'Copiar';
+      copiar.addEventListener('click', function(){ copia(mensaje(p.k, null)); });
+
+      var reset = document.createElement('button');
+      reset.className = 'btn-mini'; reset.type = 'button'; reset.textContent = 'Texto original';
+      reset.addEventListener('click', function(){
+        plantillas[p.k] = TEXTOS_POR_DEFECTO[p.k];
+        ta.value = plantillas[p.k];
+        if (db) db.doc('mensajes/plantillas').set({
+          primerContacto: plantillas.primerContacto,
+          perfil: plantillas.perfil,
+          visita: plantillas.visita,
+          ts: Date.now()
+        }).catch(function(){});
+      });
+
+      acciones.appendChild(copiar); acciones.appendChild(reset);
+      caja.appendChild(lab); caja.appendChild(ta); caja.appendChild(acciones);
+      cont.appendChild(caja);
+    });
+  }
+
+  // Los paneles de cabecera se cierran al hacer clic fuera.
+  ['#dd-docs', '#dd-msg'].forEach(function(sel){
+    var dd = $(sel);
+    dd.addEventListener('click', function(e){ e.stopPropagation(); });
+    document.addEventListener('click', function(){ dd.open = false; });
+  });
+
+  // ---------- controles ----------
+  document.querySelectorAll('.chip[data-filtro]').forEach(function(c){
+    c.setAttribute('aria-pressed', filtros[c.dataset.filtro] ? 'true' : 'false');
+    c.addEventListener('click', function(){
+      filtros[c.dataset.filtro] = !filtros[c.dataset.filtro];
+      c.setAttribute('aria-pressed', filtros[c.dataset.filtro] ? 'true' : 'false');
+      pinta();
+    });
+  });
+
+  $('#q').addEventListener('input', function(e){ texto = e.target.value.trim().toLowerCase(); pinta(); });
+  $('#precio-max').addEventListener('change', function(e){ precioMax = +e.target.value; pinta(); });
+  $('#amueblado').addEventListener('change', function(e){ amuSel = e.target.value; pinta(); });
+  $('#orden').addEventListener('change', function(e){ orden = e.target.value; pinta(); });
+
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(o){ o.setAttribute('aria-selected', 'false'); });
+      t.setAttribute('aria-selected', 'true');
+      grupoActivo = t.dataset.grupo;
+      pintaDistritos();
+      pintaHabitaciones();
+      pinta();
+    });
+  });
+
+  // Construye un panel de casillas con atajos arriba. Lo usan distritos y habitaciones.
+  function panelCasillas(panel, opciones, seleccion, cuentas, atajos, alCambiar){
+    panel.textContent = '';
+
+    if (atajos && atajos.length){
+      var barra = document.createElement('div');
+      barra.className = 'atajos';
+      atajos.forEach(function(a){
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip grupo';
+        b.setAttribute('aria-pressed', a.activo ? 'true' : 'false');
+        if (a.zona){
+          var z = document.createElement('span');
+          z.className = 'zona';
+          z.textContent = a.zona === 'p' ? '●' : '○';
+          b.appendChild(z);
+          b.appendChild(document.createTextNode(' '));
+        }
+        b.appendChild(document.createTextNode(a.t));
+        b.addEventListener('click', function(){ alCambiar(a.sel.slice()); });
+        barra.appendChild(b);
+      });
+      panel.appendChild(barra);
+    }
+
+    opciones.forEach(function(o){
+      var n = cuentas ? (cuentas[o.k] || 0) : null;
+      var fila = document.createElement('label');
+      fila.className = 'opcion' + (n === 0 ? ' sin' : '');
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.id = 'chk-' + panel.id + '-' + o.k.replace(/[^a-zA-Z0-9]/g, '');
+      cb.checked = seleccion.indexOf(o.k) !== -1;
+      cb.addEventListener('change', function(){
+        var copia2 = seleccion.slice();
+        var i = copia2.indexOf(o.k);
+        if (cb.checked && i === -1) copia2.push(o.k);
+        if (!cb.checked && i !== -1) copia2.splice(i, 1);
+        alCambiar(copia2);
+      });
+
+      var nombre = document.createElement('span');
+      nombre.className = 'nombre';
+      if (o.z){
+        var zz = document.createElement('span');
+        zz.className = 'zona';
+        zz.textContent = o.z === 'p' ? '●' : '○';
+        zz.title = o.z === 'p' ? 'Zona prioritaria' : 'Zona secundaria';
+        nombre.appendChild(zz);
+        nombre.appendChild(document.createTextNode(' '));
+      }
+      nombre.appendChild(document.createTextNode(o.n));
+
+      fila.appendChild(cb);
+      fila.appendChild(nombre);
+
+      if (n !== null){
+        var cuenta = document.createElement('span');
+        cuenta.className = 'cuenta';
+        cuenta.textContent = n;
+        fila.appendChild(cuenta);
+      }
+      panel.appendChild(fila);
+    });
+  }
+
+  function mismaLista(a, b){
+    return a.length === b.length && b.every(function(n){ return a.indexOf(n) !== -1; });
+  }
+
+  // ---------- habitaciones ----------
+  function pintaHabitaciones(){
+    var cuentas = {};
+    GRUPOS[grupoActivo].forEach(function(p){
+      var g = grupoHab(p);
+      cuentas[g] = (cuentas[g] || 0) + 1;
+    });
+
+    panelCasillas(
+      $('#panel-hab'), HABS, habs, cuentas,
+      [
+        { t:'Todas', sel:[], activo: habs.length === 0 },
+        { t:'Estudio o 1 dorm.', sel:HAB_CRITERIO, activo: mismaLista(habs, HAB_CRITERIO) }
+      ],
+      function(nueva){ habs = nueva; pintaHabitaciones(); pinta(); }
+    );
+
+    var val = $('#val-hab');
+    if (habs.length === 0) val.textContent = 'Todas';
+    else if (mismaLista(habs, HAB_CRITERIO)) val.textContent = 'Estudio o 1 dorm.';
+    else if (habs.length === 1){
+      var una = HABS.filter(function(h){ return h.k === habs[0]; })[0];
+      val.textContent = una ? una.n : habs[0];
+    }
+    else val.textContent = habs.length + ' tipos';
+  }
+
+  function zonaDe(letra){
+    return DISTRITOS.filter(function(d){ return d.z === letra; }).map(function(d){ return d.n; });
+  }
+  function mismaSeleccion(lista){ return mismaLista(distritos, lista); }
+
+  function pintaDistritos(){
+    var panel = $('#panel-distritos');
+
+    var vistos = {};
+    GRUPOS[grupoActivo].forEach(function(p){
+      if (p.distrito) vistos[p.distrito] = (vistos[p.distrito] || 0) + 1;
+    });
+
+    var opciones = DISTRITOS.map(function(d){ return { k:d.n, n:d.n, z:d.z }; });
+
+    panelCasillas(
+      panel, opciones, distritos, vistos,
+      [
+        { t:'Toda Barcelona', sel:[], activo: distritos.length === 0 },
+        { t:'Mis prioritarias', zona:'p', sel:zonaDe('p'), activo: mismaSeleccion(zonaDe('p')) },
+        { t:'Mis secundarias',  zona:'s', sel:zonaDe('s'), activo: mismaSeleccion(zonaDe('s')) }
+      ],
+      function(nueva){ distritos = nueva; pintaDistritos(); pinta(); }
+    );
+
+    var ley = document.createElement('p');
+    ley.className = 'leyenda';
+    ley.innerHTML = '<b>&#9679;</b> zona prioritaria &middot; <b>&#9675;</b> zona secundaria. ' +
+      'Est&aacute;n los 10 distritos de Barcelona, tambi&eacute;n los que hoy no tienen ninguna ficha.';
+    panel.appendChild(ley);
+
+    var val = $('#val-distritos');
+    if (distritos.length === 0) val.textContent = 'Toda Barcelona';
+    else if (mismaSeleccion(zonaDe('p'))) val.textContent = 'Mis prioritarias';
+    else if (mismaSeleccion(zonaDe('s'))) val.textContent = 'Mis secundarias';
+    else if (distritos.length === 1) val.textContent = distritos[0];
+    else val.textContent = distritos.length + ' distritos';
+  }
+
+  // Los desplegables abren solos (<details>); esto solo los cierra al hacer
+  // clic fuera o al pulsar Escape.
+  ['#dd-distritos', '#dd-hab'].forEach(function(sel){
+    var dd = $(sel);
+    dd.addEventListener('click', function(e){ e.stopPropagation(); });
+    document.addEventListener('click', function(){ dd.open = false; });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape' && dd.open){
+        dd.open = false;
+        var s = dd.querySelector('summary');
+        if (s) s.focus();
+      }
+    });
+  });
+
+  // ---------- arranque ----------
+  leeLocal();
+
+  if (!EN_CLAUDE){
+    // Página suelta: sin sincronización ni almacén de ficheros.
+    sync('off', 'solo este navegador');
+    var ayuda = document.querySelector('#dd-docs .ayuda');
+    if (ayuda){
+      ayuda.textContent = 'Pega aquí el enlace de OneDrive o Drive de cada documento. ' +
+        'En esta versión de la página no se pueden subir ficheros: solo se guardan los enlaces, ' +
+        'y se guardan en este navegador.';
+    }
+    var nota = document.querySelector('footer p:last-child');
+    if (nota){
+      nota.textContent = 'Tus marcas (favorito, ya hablé, descartado y notas) se guardan en este ' +
+        'navegador. Si abres la página en otro dispositivo, empiezan de cero.';
+    }
+  }
+
+  $('#fecha-gen').textContent = 'datos al ' + DATOS.generado.split('-').reverse().join('/');
+  $('#pie').textContent = 'Reunidas de cinco portales —Idealista, Habitaclia, Pisos.com, Enalquiler y Yaencontre— ' +
+    'y de las webs propias de 16 inmobiliarias de Barcelona. ' +
+    GRUPOS.pisos.length + ' pisos y ' + GRUPOS.colivings.length + ' colivings.';
+  pintaDistritos();
+  pintaHabitaciones();
+  pintaEstadoActualizacion();
+  pintaDocs();
+  pintaPlantillas();
+  pinta();
+})();
+</script>
