@@ -367,7 +367,8 @@
       <span>Entrada <b>octubre–diciembre</b></span>
     </p>
     <div class="acciones-top">
-      <button class="btn-grande" type="button" id="btn-actualizar">Actualizar ahora</button>
+      <a class="btn-grande" id="btn-actualizar" target="_blank" rel="noopener noreferrer"
+         href="https://github.com/GSappia/PISO-BCN/actions/workflows/buscar.yml">Actualizar ahora ↗</a>
 
       <details class="herramienta" id="dd-docs">
         <summary class="btn-grande secundario">Mi documentación <span class="caret" aria-hidden="true">▾</span></summary>
@@ -807,6 +808,7 @@
       ul.appendChild(li);
     }
     if (p.nuevo) tag('Nuevo hoy', 'nueva');
+    if (p.auto) tag('Sin verificar', 'no');
     tag(p.tipo);
     tag(p.amueblado ? 'Amueblado: ' + p.amueblado : null, p.amuSi ? 'si' : (p.amuNo ? 'no' : ''));
     tag(p.contrato, p.temporada ? 'temp' : '');
@@ -923,7 +925,7 @@
   }
 
   function pintaEstadoActualizacion(){
-    var el = $('#estado-act'), btn = $('#btn-actualizar');
+    var el = $('#estado-act');
     var a = actualizacion || {};
     el.textContent = '';
     el.className = 'estado-act';
@@ -931,20 +933,16 @@
     if (a.estado === 'pendiente'){
       el.className = 'estado-act pendiente';
       el.innerHTML = '<b>Actualización pedida ' + cuando(a.pedidoEn) + '.</b><br>' +
-        'Se lanza desde el Chrome de tu ordenador; el resultado aparece aquí solo.';
-      btn.disabled = true;
-      btn.textContent = 'Actualización pedida';
+        'Dale a <b>Run workflow</b> en la pestaña que se ha abierto.';
       return;
     }
 
-    btn.disabled = false;
-    btn.textContent = 'Actualizar ahora';
     if (a.hechoEn){
       el.innerHTML = '<b>Último barrido: ' + cuando(a.hechoEn) + '.</b><br>' +
-        (a.resumen ? String(a.resumen) : 'Idealista, Habitaclia, Pisos.com, Enalquiler y Yaencontre.');
+        (a.resumen ? String(a.resumen) : 'Habitaclia y Pisos.com.');
     } else {
       el.innerHTML = '<b>Último barrido: 17/09/2026.</b><br>' +
-        '5 portales y 16 webs de inmobiliarias.';
+        'El robot busca en Habitaclia y Pisos.com. Idealista y Yaencontre los hago yo.';
     }
   }
 
