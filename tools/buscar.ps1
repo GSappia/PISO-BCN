@@ -281,17 +281,35 @@ foreach ($a in $nuevos) {
 if ($anadidos.Count -gt 0) {
   $datos.pisos = @($anadidos) + @($datos.pisos)
   $datos.generado = Get-Date -Format 'yyyy-MM-dd'
+}
 
-  $json = $datos | ConvertTo-Json -Depth 5 -Compress
-  $json = $json.Replace('<', '<')
-  [System.IO.File]::WriteAllText($rutaDatos, $json, (New-Object System.Text.UTF8Encoding($false)))
+# El resultado del barrido se guarda SIEMPRE, encuentre o no algo. Asi la
+# pagina puede decir cuando corrio por ultima vez y que vio: un boton que no
+# deja rastro parece roto aunque haya funcionado.
+$barrido = [pscustomobject]@{
+  fecha     = Get-Date -Format 'yyyy-MM-dd'
+  hora      = Get-Date -Format 'HH:mm'
+  revisados = $encontrados.Count
+  nuevos    = $anadidos.Count
+  portales  = 'Habitaclia y Pisos.com'
+}
+if ($datos.PSObject.Properties.Name -contains 'barrido') {
+  $datos.barrido = $barrido
+} else {
+  $datos | Add-Member -NotePropertyName barrido -NotePropertyValue $barrido
+}
 
+$json = $datos | ConvertTo-Json -Depth 5 -Compress
+$json = $json.Replace('<', '<')
+[System.IO.File]::WriteAllText($rutaDatos, $json, (New-Object System.Text.UTF8Encoding($false)))
+
+if ($anadidos.Count -gt 0) {
   Write-Host "Anadidos a datos.json:"
   foreach ($a in $anadidos) {
     Write-Host ("  {0,6} EUR  {1,4} m2  {2,-28} {3}" -f $a.precio, $a.m2, $a.barrio, $a.anunciante)
   }
 } else {
-  Write-Host "Nada nuevo: datos.json se queda como estaba."
+  Write-Host "Nada nuevo, pero queda anotado el barrido con su hora."
 }
 
 Write-Host ""

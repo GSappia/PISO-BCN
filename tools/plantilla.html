@@ -937,12 +937,21 @@
       return;
     }
 
-    if (a.hechoEn){
-      el.innerHTML = '<b>Último barrido: ' + cuando(a.hechoEn) + '.</b><br>' +
-        (a.resumen ? String(a.resumen) : 'Habitaclia y Pisos.com.');
+    // Lo que dejó escrito el robot en su última pasada.
+    var b = DATOS.barrido;
+    if (b && b.fecha){
+      var dia = b.fecha.split('-').reverse().join('/');
+      var hoy = new Date();
+      var esHoy = b.fecha === [hoy.getFullYear(),
+        ('0' + (hoy.getMonth() + 1)).slice(-2), ('0' + hoy.getDate()).slice(-2)].join('-');
+      var recuento = b.nuevos > 0
+        ? '<b>' + b.nuevos + (b.nuevos === 1 ? ' anuncio nuevo' : ' anuncios nuevos') + '</b>, arriba del todo.'
+        : 'ninguno nuevo: ya los tenías todos.';
+      el.innerHTML = '<b>El robot pasó ' + (esHoy ? 'hoy' : 'el ' + dia) + ' a las ' + b.hora + '.</b><br>' +
+        'Revisó ' + b.revisados + ' anuncios de ' + (b.portales || 'los portales') + ' y ' + recuento;
     } else {
-      el.innerHTML = '<b>Último barrido: 17/09/2026.</b><br>' +
-        'El robot busca en Habitaclia y Pisos.com. Idealista y Yaencontre los hago yo.';
+      el.innerHTML = '<b>El robot aún no ha pasado.</b><br>' +
+        'Busca en Habitaclia y Pisos.com. Idealista y Yaencontre los hago yo.';
     }
   }
 
