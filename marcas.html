@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rescatar mis marcas · Piso BCN</title>
+<style>
+  :root{
+    color-scheme: light dark;
+    --fondo:#f1f4f1; --papel:#ffffff; --tinta:#16211a; --suave:#5c6b61;
+    --linea:#d8e2da; --verde:#1f7a4d; --verde-claro:#e6f4ec;
+    --ambar:#8a5a00; --ambar-claro:#fdf2dd; --rojo:#8c2f2f;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --fondo:#11150f; --papel:#1a201b; --tinta:#e8eee9; --suave:#a3b0a7;
+      --linea:#2c3830; --verde:#68c58e; --verde-claro:#1d2e24;
+      --ambar:#e8c07a; --ambar-claro:#2e2617; --rojo:#e39a9a;
+    }
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:20px 16px 48px; background:var(--fondo); color:var(--tinta);
+    font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap{ max-width:720px; margin:0 auto; }
+  h1{ font-size:24px; line-height:1.2; margin:0 0 6px; }
+  .sub{ color:var(--suave); margin:0 0 20px; }
+  .caja{
+    background:var(--papel); border:1px solid var(--linea); border-radius:14px;
+    padding:16px; margin-bottom:16px;
+  }
+  .cifras{ display:flex; flex-wrap:wrap; gap:10px; margin:0; padding:0; list-style:none; }
+  .cifras li{
+    background:var(--verde-claro); color:var(--verde); border-radius:10px;
+    padding:8px 12px; font-weight:600; font-size:15px;
+  }
+  button{
+    font:inherit; font-weight:600; cursor:pointer; border-radius:12px;
+    padding:14px 18px; border:1px solid var(--verde); background:var(--verde); color:#fff;
+    width:100%; margin-bottom:10px;
+  }
+  button.sec{ background:transparent; color:var(--verde); }
+  button:active{ transform:translateY(1px); }
+  textarea{
+    width:100%; min-height:130px; font:13px/1.4 ui-monospace, Menlo, Consolas, monospace;
+    border:1px solid var(--linea); border-radius:10px; padding:10px;
+    background:var(--fondo); color:var(--tinta); resize:vertical;
+  }
+  .grupo{ margin-top:18px; }
+  .grupo h2{ font-size:15px; margin:0 0 8px; color:var(--suave); text-transform:uppercase; letter-spacing:.04em; }
+  .ficha{ border-top:1px solid var(--linea); padding:10px 0; }
+  .ficha b{ display:block; }
+  .ficha .meta{ color:var(--suave); font-size:14px; }
+  .ficha .nota{
+    margin-top:6px; padding:8px 10px; background:var(--ambar-claro); color:var(--ambar);
+    border-radius:8px; font-size:14px; white-space:pre-wrap;
+  }
+  .aviso{ background:var(--ambar-claro); color:var(--ambar); border-color:transparent; }
+  a{ color:var(--verde); }
+  .pie{ color:var(--suave); font-size:14px; margin-top:24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Rescatar mis marcas</h1>
+  <p class="sub">
+    Esta página lee las marcas guardadas <b>en este navegador</b> y te las deja listas para copiar.
+    Ábrela en el mismo móvil u ordenador donde marcaste los pisos.
+  </p>
+
+  <div id="salida"></div>
+
+  <p class="pie"><a href="./">← Volver a la búsqueda</a></p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var CLAVE = 'marcas-piso-bcn';
+  var salida = document.getElementById('salida');
+
+  function el(t, cls, txt){
+    var n = document.createElement(t);
+    if (cls) n.className = cls;
+    if (txt != null) n.textContent = txt;
+    return n;
+  }
+  function euros(n){
+    if (n == null || isNaN(n)) return 'sin precio';
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' €';
+  }
+  function vacia(m){
+    return !m || (!m.fav && !m.hablado && !m.descartado && !(m.nota && m.nota.trim()));
+  }
+
+  var marcas = {};
+  var error = null;
+  try {
+    var crudo = localStorage.getItem(CLAVE);
+    marcas = crudo ? (JSON.parse(crudo) || {}) : {};
+  } catch(e){ error = e; }
+
+  var ids = Object.keys(marcas).filter(function(id){ return !vacia(marcas[id]); });
+
+  if (error || !ids.length){
+    var c = el('div', 'caja aviso');
+    c.appendChild(el('p', null,
+      error ? 'Este navegador no me deja leer lo guardado (puede ser modo privado, o los datos del sitio bloqueados).'
+            : 'No hay ninguna marca guardada en este navegador.'));
+    c.appendChild(el('p', null,
+      'Si marcaste los pisos desde el móvil, abre esta misma dirección en el móvil, ' +
+      'con el mismo navegador y sin modo incógnito. Las marcas no viajan entre dispositivos.'));
+    salida.appendChild(c);
+    return;
+  }
+
+  // ---------- resumen ----------
+  var n = { fav:0, hablado:0, descartado:0, nota:0 };
+  ids.forEach(function(id){
+    var m = marcas[id];
+    if (m.fav) n.fav++;
+    if (m.hablado) n.hablado++;
+    if (m.descartado) n.descartado++;
+    if (m.nota && m.nota.trim()) n.nota++;
+  });
+
+  var texto = JSON.stringify({
+    origen: 'web publica PISO-BCN',
+    exportado: new Date().toISOString(),
+    total: ids.length,
+    marcas: ids.reduce(function(acc, id){ acc[id] = marcas[id]; return acc; }, {})
+  }, null, 1);
+
+  var caja = el('div', 'caja');
+  var lista = el('ul', 'cifras');
+  lista.appendChild(el('li', null, ids.length + ' fichas marcadas'));
+  if (n.fav)        lista.appendChild(el('li', null, n.fav + ' favoritas'));
+  if (n.hablado)    lista.appendChild(el('li', null, n.hablado + ' ya hablé'));
+  if (n.descartado) lista.appendChild(el('li', null, n.descartado + ' descartadas'));
+  if (n.nota)       lista.appendChild(el('li', null, n.nota + ' con nota'));
+  caja.appendChild(lista);
+  salida.appendChild(caja);
+
+  // ---------- copiar ----------
+  var acc = el('div', 'caja');
+  var bCopiar = el('button', null, 'Copiar mis marcas');
+  var bBajar = el('button', 'sec', 'Descargar como fichero');
+  var area = el('textarea');
+  area.value = texto;
+  area.readOnly = true;
+  area.hidden = true;
+  area.setAttribute('aria-label', 'Marcas en texto');
+
+  bCopiar.addEventListener('click', function(){
+    function ok(){ bCopiar.textContent = 'Copiado ✓ ya puedes pegarlo'; }
+    function manual(){
+      area.hidden = false;
+      area.focus(); area.select();
+      bCopiar.textContent = 'Cópialo a mano desde el recuadro';
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(texto).then(ok, manual);
+    } else {
+      area.hidden = false; area.focus(); area.select();
+      try { if (document.execCommand('copy')) { ok(); } else { manual(); } }
+      catch(e){ manual(); }
+    }
+  });
+
+  bBajar.addEventListener('click', function(){
+    var blob = new Blob([texto], { type:'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'marcas-piso-bcn.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  });
+
+  acc.appendChild(bCopiar);
+  acc.appendChild(bBajar);
+  acc.appendChild(area);
+  salida.appendChild(acc);
+
+  // ---------- lista legible ----------
+  var detalle = el('div', 'caja');
+  detalle.appendChild(el('p', 'sub', 'Esto es lo que hay guardado:'));
+  salida.appendChild(detalle);
+
+  function ficha(id, f){
+    var d = el('div', 'ficha');
+    if (f){
+      d.appendChild(el('b', null, (f.barrio || 'Sin barrio') + ' · ' + euros(f.precio)));
+      d.appendChild(el('div', 'meta',
+        [f.tipo, f.m2 ? f.m2 + ' m²' : null, f.distrito, f.anunciante]
+          .filter(Boolean).join(' · ')));
+    } else {
+      d.appendChild(el('b', null, 'Ficha ' + id));
+      d.appendChild(el('div', 'meta', 'No la encuentro en los datos actuales de la página.'));
+    }
+    var m = marcas[id];
+    if (m.nota && m.nota.trim()) d.appendChild(el('div', 'nota', m.nota.trim()));
+    return d;
+  }
+
+  function pinta(fichas){
+    var porId = {};
+    (fichas || []).forEach(function(f){ porId[f.id] = f; });
+
+    var grupos = [
+      { k:'fav',        t:'Favoritas' },
+      { k:'hablado',    t:'Ya hablé' },
+      { k:'descartado', t:'Descartadas' }
+    ];
+    var pintadas = {};
+
+    grupos.forEach(function(g){
+      var dentro = ids.filter(function(id){ return marcas[id][g.k]; });
+      if (!dentro.length) return;
+      var bloque = el('div', 'grupo');
+      bloque.appendChild(el('h2', null, g.t + ' (' + dentro.length + ')'));
+      dentro.forEach(function(id){
+        pintadas[id] = true;
+        bloque.appendChild(ficha(id, porId[id]));
+      });
+      detalle.appendChild(bloque);
+    });
+
+    var soloNota = ids.filter(function(id){ return !pintadas[id]; });
+    if (soloNota.length){
+      var b2 = el('div', 'grupo');
+      b2.appendChild(el('h2', null, 'Solo con nota (' + soloNota.length + ')'));
+      soloNota.forEach(function(id){ b2.appendChild(ficha(id, porId[id])); });
+      detalle.appendChild(b2);
+    }
+  }
+
+  fetch('datos.json', { cache:'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(j){ pinta((j.pisos || []).concat(j.colivings || [])); })
+    .catch(function(){ pinta(null); });
+})();
+</script>
+</body>
+</html>

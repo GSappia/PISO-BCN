@@ -130,6 +130,24 @@
   .estado-act b{color:var(--ink-2);font-weight:600}
   .estado-act.pendiente b{color:var(--media)}
 
+  /* Aviso de la copia suelta: sus marcas no salen de este navegador. */
+  .aviso-local{
+    display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap;
+    background:var(--warn-soft);color:var(--warn);
+    border-radius:var(--radius);padding:10px 12px;margin:0 0 14px;
+    font-size:12.5px;line-height:1.45;
+  }
+  .aviso-local p{margin:0;flex:1 1 240px}
+  .aviso-local b{font-weight:700}
+  .aviso-local a{color:inherit;font-weight:700;white-space:nowrap;text-underline-offset:2px}
+  .marcas-botones{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}
+  .marcas-botones:last-of-type{margin:8px 0 0}
+  #marcas-pegar{
+    width:100%;min-height:90px;font:inherit;font-size:12px;line-height:1.45;
+    border:1px solid var(--line-strong);border-radius:7px;padding:8px;resize:vertical;
+    background:var(--surface);color:var(--ink);
+  }
+
   details.herramienta{position:relative}
   details.herramienta > summary{list-style:none;cursor:pointer}
   details.herramienta > summary::-webkit-details-marker{display:none}
@@ -359,6 +377,13 @@
 
 <header class="top">
   <div class="wrap">
+    <div class="aviso-local" id="aviso-local" hidden>
+      <p>
+        <b>Ojo:</b> esta copia guarda tus marcas <b>solo en este navegador</b>.
+        Lo que marques en el móvil no aparece en el ordenador, ni al revés.
+      </p>
+      <a href="marcas.html">Traspasar mis marcas →</a>
+    </div>
     <p class="eyebrow">
       <span>Barcelona · alquiler</span>
       <span id="fecha-gen"></span>
@@ -406,6 +431,27 @@
             <code>{{precio}}</code> <code>{{m2}}</code> <code>{{tipo}}</code>
             <code>{{enlace}}</code> <code>{{docs}}</code>
           </p>
+        </div>
+      </details>
+
+      <details class="herramienta" id="dd-marcas">
+        <summary class="btn-grande secundario">Mis marcas <span class="caret" aria-hidden="true">▾</span></summary>
+        <div class="panel ancho">
+          <h4>Traspasar mis marcas</h4>
+          <p class="ayuda" id="ayuda-marcas">
+            Tus favoritos, «ya hablé», descartes y notas. Cópialos para llevártelos a otro
+            dispositivo, o pega aquí los que traigas de otro: se suman a los que ya tengas,
+            no borran nada.
+          </p>
+          <div class="marcas-botones">
+            <button class="btn-mini" type="button" id="marcas-copiar">Copiar mis marcas</button>
+            <button class="btn-mini" type="button" id="marcas-bajar">Descargar</button>
+          </div>
+          <textarea id="marcas-pegar" placeholder="Pega aquí las marcas que traigas de otro dispositivo…"></textarea>
+          <div class="marcas-botones">
+            <button class="btn-mini" type="button" id="marcas-importar">Importar lo pegado</button>
+          </div>
+          <p class="fichas-clave" id="marcas-estado"></p>
         </div>
       </details>
 
@@ -621,6 +667,55 @@
     }, 350);
   }
 
+  // ---------- traspaso de marcas entre dispositivos ----------
+  // La copia suelta (GitHub Pages) guarda las marcas solo en su navegador, así que
+  // hace falta una forma manual de llevarlas de un sitio a otro.
+  function marcasConAlgo(){
+    return Object.keys(marcas).filter(function(id){
+      var m = marcas[id];
+      return m && (m.fav || m.hablado || m.descartado || (m.nota && m.nota.trim()));
+    });
+  }
+  function exportaMarcas(){
+    var ids = marcasConAlgo();
+    var fuera = {};
+    ids.forEach(function(id){ fuera[id] = marcas[id]; });
+    return JSON.stringify({
+      origen: EN_CLAUDE ? 'pagina privada' : 'web publica PISO-BCN',
+      exportado: new Date().toISOString(),
+      total: ids.length,
+      marcas: fuera
+    }, null, 1);
+  }
+  // Importa sumando: nunca desmarca ni pisa una nota que ya estuviera escrita.
+  function importaMarcas(txt){
+    var j = JSON.parse(txt);
+    var entra = (j && j.marcas) ? j.marcas : j;
+    if (!entra || typeof entra !== 'object' || Array.isArray(entra)) throw new Error('formato');
+    var leidas = 0, cambiadas = 0;
+    Object.keys(entra).forEach(function(id){
+      var v = entra[id];
+      if (!v || typeof v !== 'object') return;
+      leidas++;
+      var m = marca(id);
+      var antes = JSON.stringify(m);
+      m.fav = !!v.fav || !!m.fav;
+      m.hablado = !!v.hablado || !!m.hablado;
+      m.descartado = !!v.descartado || !!m.descartado;
+      var nueva = (v.nota || '').trim();
+      var vieja = (m.nota || '').trim();
+      if (nueva && vieja !== nueva && vieja.indexOf(nueva) === -1){
+        m.nota = vieja ? (vieja + ' · ' + nueva) : nueva;
+      }
+      marcas[id] = m;
+      if (JSON.stringify(m) !== antes){ cambiadas++; escribe(id); }
+    });
+    if (!leidas) throw new Error('vacio');
+    guardaLocal();
+    pinta();
+    return { leidas: leidas, cambiadas: cambiadas };
+  }
+
   (async function(){
     try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; }
     catch(e){ db = null; }
@@ -755,17 +850,19 @@
     });
   }
 
-  function copia(txt){
+  function copia(txt, etiqueta){
+    var hecho = etiqueta || 'Mensaje copiado';
     if (navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(txt).then(function(){ toast('Mensaje copiado'); },
-        function(){ copiaViejo(txt); });
-    } else { copiaViejo(txt); }
+      navigator.clipboard.writeText(txt).then(function(){ toast(hecho); },
+        function(){ copiaViejo(txt, hecho); });
+    } else { copiaViejo(txt, hecho); }
   }
-  function copiaViejo(txt){
+  function copiaViejo(txt, etiqueta){
+    var hecho = etiqueta || 'Mensaje copiado';
     var ta = document.createElement('textarea');
     ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); toast('Mensaje copiado'); }
+    try { document.execCommand('copy'); toast(hecho); }
     catch(e){ toast('No he podido copiarlo'); }
     document.body.removeChild(ta);
   }
@@ -1001,9 +1098,19 @@
 
   function guardaDoc(clave, datos){
     docs[clave] = datos;
+    guardaDocsLocal();   // sin esto, en la copia suelta los enlaces se perdían al recargar
     pintaDocs();
     if (!db) return;
     db.doc('docs/' + clave).set(datos).catch(function(){ toast('No he podido guardarlo'); });
+  }
+  function guardaDocsLocal(){
+    try { localStorage.setItem('docs-piso-bcn', JSON.stringify(docs)); } catch(e){}
+  }
+  function leeDocsLocal(){
+    try {
+      var v = localStorage.getItem('docs-piso-bcn');
+      if (v) docs = JSON.parse(v) || {};
+    } catch(e){}
   }
 
   var ERRORES_SUBIDA = {
@@ -1111,6 +1218,44 @@
   }
 
   $('#copiar-docs').addEventListener('click', function(){ copia(enlacesDocumentacion()); });
+
+  // ---------- botones de traspaso de marcas ----------
+  function estadoMarcas(txt){ $('#marcas-estado').textContent = txt || ''; }
+
+  $('#marcas-copiar').addEventListener('click', function(){
+    var n = marcasConAlgo().length;
+    if (!n){ estadoMarcas('Todavía no has marcado ninguna ficha.'); return; }
+    copia(exportaMarcas(), 'Marcas copiadas');
+    estadoMarcas(n + (n === 1 ? ' ficha copiada.' : ' fichas copiadas.') +
+      ' Pégalas en el otro dispositivo, en este mismo desplegable.');
+  });
+
+  $('#marcas-bajar').addEventListener('click', function(){
+    var n = marcasConAlgo().length;
+    if (!n){ estadoMarcas('Todavía no has marcado ninguna ficha.'); return; }
+    var url = URL.createObjectURL(new Blob([exportaMarcas()], { type:'application/json' }));
+    var a = document.createElement('a');
+    a.href = url; a.download = 'marcas-piso-bcn.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    estadoMarcas('Descargadas ' + n + ' fichas en marcas-piso-bcn.json.');
+  });
+
+  $('#marcas-importar').addEventListener('click', function(){
+    var campo = $('#marcas-pegar');
+    var txt = (campo.value || '').trim();
+    if (!txt){ estadoMarcas('Pega antes el texto que copiaste en el otro dispositivo.'); return; }
+    try {
+      var r = importaMarcas(txt);
+      campo.value = '';
+      estadoMarcas(r.cambiadas
+        ? ('Importadas ' + r.cambiadas + ' de ' + r.leidas + ' fichas. El resto ya las tenías igual.')
+        : ('Leídas ' + r.leidas + ' fichas y ninguna cambia: ya las tenías todas.'));
+      toast(r.cambiadas ? ('Importadas ' + r.cambiadas + ' fichas') : 'Ya las tenías todas');
+    } catch(e){
+      estadoMarcas('Eso no parece el texto de unas marcas. Cópialo entero, desde la primera llave a la última.');
+    }
+  });
 
   // ---------- plantillas de mensaje ----------
   function pintaPlantillas(){
@@ -1362,16 +1507,27 @@
   if (!EN_CLAUDE){
     // Página suelta: sin sincronización ni almacén de ficheros.
     sync('off', 'solo este navegador');
+    leeDocsLocal();
+    // El aviso va arriba del todo: en el pie nadie lo veía y se marcaron
+    // decenas de fichas en el móvil creyendo que se sincronizaban.
+    $('#aviso-local').hidden = false;
     var ayuda = document.querySelector('#dd-docs .ayuda');
     if (ayuda){
       ayuda.textContent = 'Pega aquí el enlace de OneDrive o Drive de cada documento. ' +
         'En esta versión de la página no se pueden subir ficheros: solo se guardan los enlaces, ' +
         'y se guardan en este navegador.';
     }
+    var ayudaM = $('#ayuda-marcas');
+    if (ayudaM){
+      ayudaM.textContent = 'Esta copia no sincroniza: lo que marcas se queda en este navegador. ' +
+        'Copia aquí tus marcas para llevártelas a otro dispositivo, o pega las que traigas ' +
+        'de otro: se suman a las que ya tengas, no borran nada.';
+    }
     var nota = document.querySelector('footer p:last-child');
     if (nota){
       nota.textContent = 'Tus marcas (favorito, ya hablé, descartado y notas) se guardan en este ' +
-        'navegador. Si abres la página en otro dispositivo, empiezan de cero.';
+        'navegador. Si abres la página en otro dispositivo, empiezan de cero: usa «Mis marcas» ' +
+        'para traspasarlas.';
     }
   }
 
